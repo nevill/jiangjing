@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
+	"github.com/nevill/jiangjiang/api/app"
 	"github.com/nevill/jiangjiang/api/enterprise"
 )
 
@@ -27,6 +28,7 @@ type EnterpriseSearch struct {
 }
 
 type AppSearch struct {
+	*app.API
 }
 
 func addrToUrls(address string) ([]*url.URL, error) {
@@ -63,6 +65,9 @@ func NewClient(cfg Config) (*Client, error) {
 	c := &Client{
 		EnterpriseSearch: EnterpriseSearch{
 			enterprise.New(tp),
+		},
+		AppSearch: AppSearch{
+			app.New(tp),
 		},
 	}
 

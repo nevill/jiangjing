@@ -9,6 +9,14 @@ import (
 	"net/http"
 )
 
+const (
+	HeaderContentType = "Content-Type"
+)
+
+var (
+	HeaderContentTypeJSON = []string{"application/json"}
+)
+
 type Transport interface {
 	Perform(*http.Request) (*http.Response, error)
 }
