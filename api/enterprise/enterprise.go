@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/nevill/jiangjiang/api"
+	"github.com/nevill/jiangjing/api"
 )
 
 func newHealthFunc(tp api.Transport) Health {

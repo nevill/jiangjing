@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/nevill/jiangjiang/api"
+	"github.com/nevill/jiangjing/api"
 )
 
 type API struct {

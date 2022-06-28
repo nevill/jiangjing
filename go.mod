@@ -1,4 +1,4 @@
-module github.com/nevill/jiangjiang
+module github.com/nevill/jiangjing
 
 go 1.16
 

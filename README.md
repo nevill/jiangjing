@@ -1,5 +1,5 @@
 # JiangJing
-`JiangJiang` is a Go client for elastic enterprise search. The implementation is inspired by [go-elasticsearch](https://github.com/elastic/go-elasticsearch/).
+`JiangJing` is a Go client for elastic enterprise search. The implementation is inspired by [go-elasticsearch](https://github.com/elastic/go-elasticsearch/).
 > The name 蒋敬 (jiǎng jìng) is a character from classical Chinese novel `Shui Hu Zhuan`.
 
 
@@ -13,7 +13,7 @@ import (
 	"log"
 	"net/http"
 
-	jj "github.com/nevill/jiangjiang"
+	jj "github.com/nevill/jiangjing"
 )
 
 func main() {

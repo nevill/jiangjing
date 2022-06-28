@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/nevill/jiangjiang/api"
+	"github.com/nevill/jiangjing/api"
 )
 
 type Engines struct {

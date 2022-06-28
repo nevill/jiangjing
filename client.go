@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
-	"github.com/nevill/jiangjiang/api/app"
-	"github.com/nevill/jiangjiang/api/enterprise"
+	"github.com/nevill/jiangjing/api/app"
+	"github.com/nevill/jiangjing/api/enterprise"
 )
 
 type Client struct {
