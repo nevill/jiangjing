@@ -41,6 +41,19 @@ func main() {
 	}
 
 	{
+		response, err := client.AppSearch.Search(engineName, "mountain")
+		if err != nil {
+			log.Fatalf("Unexpected error: %s\n", err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			log.Fatalf("Expect to get status: %d, but got: %d\n", http.StatusOK, response.StatusCode)
+		}
+
+		log.Printf("response is: %s\n", response)
+	}
+
+	{
 		response, err := client.AppSearch.Engines.List()
 		if err != nil {
 			log.Fatalf("Unexpected error: %s\n", err)

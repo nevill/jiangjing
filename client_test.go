@@ -2,9 +2,11 @@ package jiangjing
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 const (
@@ -12,6 +14,18 @@ const (
 	username = "elastic"
 	password = "elastic823"
 )
+
+func newTestClient() *Client {
+	client, err := NewClient(Config{
+		Address:  address,
+		Username: username,
+		Password: password,
+	})
+	if err != nil {
+		panic(fmt.Sprintf("Unexpected error: %s\n", err))
+	}
+	return client
+}
 
 func TestGetHealth(t *testing.T) {
 	client, err := NewClient(Config{
@@ -359,4 +373,117 @@ func TestSynonyms(t *testing.T) {
 			t.Fatalf("Expect to get status: %d, but got: %d\n", http.StatusOK, resp.StatusCode)
 		}
 	}
+}
+
+func TestSearch(t *testing.T) {
+	client := newTestClient()
+	engine := "search-searching"
+
+	{
+		// create a new engine for testing
+		if _, err := client.AppSearch.Engines.Create(engine); err != nil {
+			t.Fatalf("Unexpected error: %s\n", err)
+		}
+	}
+	t.Cleanup(func() {
+		// remove the testing engine
+		if _, err := client.AppSearch.Engines.Delete(engine); err != nil {
+			t.Fatalf("Unexpected error: %s\n", err)
+		}
+	})
+
+	type RawString struct {
+		Raw string `json:"raw"`
+	}
+
+	type RawDoc struct {
+		Id   RawString `json:"id"`
+		Name RawString `json:"name"`
+		Year RawString `json:"year"`
+	}
+
+	type SearchResult struct {
+		Results []RawDoc `json:"results"`
+	}
+
+	type Doc struct {
+		Id   string `json:"id"`
+		Name string `json:"name"`
+		Year string `json:"year"`
+	}
+
+	type ListResult struct {
+		Results []Doc `json:"results"`
+	}
+
+	t.Run("create new documents", func(t *testing.T) {
+		resp, err := client.AppSearch.Documents.Create(
+			engine,
+			client.AppSearch.Documents.Create.WithDocuments(
+				map[string]interface{}{"name": "Super Lorenzo Bros", "year": "1985"},
+				map[string]interface{}{"name": "Pack-Man", "year": "1980"},
+				map[string]interface{}{"name": "Galaxxian", "year": "1979"},
+				map[string]interface{}{"name": "Audiovisual, the hedgehog", "year": "1991"},
+			),
+		)
+		defer resp.Body.Close()
+		if err != nil {
+			t.Fatalf("Unexpected error: %s\n", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("Expect to get status: %d, but got: %d\n", http.StatusOK, resp.StatusCode)
+		}
+	})
+
+	t.Run("list documents", func(t *testing.T) {
+		var r ListResult
+		attempts := 0
+		for ; attempts < 5; attempts++ {
+			time.Sleep(time.Second * 3)
+			resp, err := client.AppSearch.Documents.List(engine)
+			if err != nil {
+				t.Fatalf("Unexpected error: %s\n", err)
+			}
+			if resp.StatusCode != http.StatusOK {
+				t.Fatalf("Expect to get status: %d, but got: %d\n", http.StatusOK, resp.StatusCode)
+			}
+			json.NewDecoder(resp.Body).Decode(&r)
+			resp.Body.Close()
+			if len(r.Results) > 0 {
+				break
+			}
+		}
+
+		if attempts == 5 && len(r.Results) == 0 {
+			t.Fatal("Max attempts reached, no records found")
+		}
+	})
+
+	t.Run("search for documents", func(t *testing.T) {
+		resp, err := client.AppSearch.Search(engine, "Pack-Man")
+		defer resp.Body.Close()
+		if err != nil {
+			t.Fatalf("Unexpected error: %s\n", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("Expect to get status: %d, but got: %d\n", http.StatusOK, resp.StatusCode)
+		}
+
+		var r SearchResult
+		if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
+			t.Fatalf("Error parsing the response body: %s", err)
+		}
+
+		if len(r.Results) == 0 {
+			t.Fatal("Expect to get some results, but got nothing.")
+		}
+
+		if r.Results[0].Name.Raw != "Pack-Man" {
+			t.Fatalf("Expect to get Pack-Man, but got %s.", r.Results[0].Name.Raw)
+		}
+
+		if r.Results[0].Year.Raw != "1980" {
+			t.Fatalf("Expect to get 1980, but got %s.", r.Results[0].Year.Raw)
+		}
+	})
 }

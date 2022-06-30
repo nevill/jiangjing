@@ -5,8 +5,10 @@ import (
 )
 
 type API struct {
-	Engines  *Engines
-	Synonyms *Synonyms
+	Engines   *Engines
+	Synonyms  *Synonyms
+	Documents *Documents
+	Search    Search
 }
 
 func New(t api.Transport) *API {
@@ -24,5 +26,11 @@ func New(t api.Transport) *API {
 			Update: newSynonymsUpdateFunc(t),
 			Delete: newSynonymsDeleteFunc(t),
 		},
+		Documents: &Documents{
+			Create: newDocumentsCreateFunc(t),
+			Delete: newDocumentsDeleteFunc(t),
+			List:   newDocumentsListFunc(t),
+		},
+		Search: newSearchFunc(t),
 	}
 }
