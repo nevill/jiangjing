@@ -7,6 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -66,8 +68,34 @@ func (r *Response) String() string {
 	return out.String()
 }
 
+// IsError returns true when the response status indicates failure.
+//
 func (r *Response) IsError() bool {
 	return r.StatusCode > 299
+}
+
+// Status returns the response status as a string.
+//
+func (r *Response) Status() string {
+	var b strings.Builder
+	if r != nil {
+		b.WriteString(strconv.Itoa(r.StatusCode))
+		b.WriteString(" ")
+		b.WriteString(http.StatusText(r.StatusCode))
+	}
+	return b.String()
+}
+
+// Warnings returns the deprecation warnings from response headers.
+//
+func (r *Response) Warnings() []string {
+	return r.Header["Warning"]
+}
+
+// HasWarnings returns true when the response headers contain deprecation warnings.
+//
+func (r *Response) HasWarnings() bool {
+	return len(r.Warnings()) > 0
 }
 
 // Request is the basic type for encapsulating API request
