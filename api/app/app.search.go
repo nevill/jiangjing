@@ -1,16 +1,15 @@
 package app
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/nevill/jiangjing/api"
 )
 
-type Search func(engine, query string, o ...func(*SearchRequest)) (*api.Response, error)
+type Search func(o ...func(*SearchRequest)) (*api.Response, error)
 
 func (Search) WithContext(ctx context.Context) func(*SearchRequest) {
 	return func(r *SearchRequest) {
@@ -18,14 +17,24 @@ func (Search) WithContext(ctx context.Context) func(*SearchRequest) {
 	}
 }
 
+func (Search) WithEngine(engine string) func(*SearchRequest) {
+	return func(r *SearchRequest) {
+		r.Engine = engine
+	}
+}
+
+func (Search) WithBody(body io.Reader) func(*SearchRequest) {
+	return func(r *SearchRequest) {
+		r.Body = body
+	}
+}
+
 func newSearchFunc(tp api.Transport) Search {
-	return func(engine, query string, o ...func(*SearchRequest)) (*api.Response, error) {
+	return func(o ...func(*SearchRequest)) (*api.Response, error) {
 		r := SearchRequest{
 			Request: api.Request{
 				Transport: tp,
 			},
-			Engine: engine,
-			Query:  query,
 		}
 		for _, f := range o {
 			f(&r)
@@ -37,20 +46,13 @@ func newSearchFunc(tp api.Transport) Search {
 type SearchRequest struct {
 	api.Request
 	Engine string
-	Query  string
+	Body   io.Reader
 }
 
 func (r SearchRequest) Do() (*api.Response, error) {
 	path := fmt.Sprintf("/api/as/v1/engines/%s/search", r.Engine)
+	req, err := api.NewRequest(http.MethodPost, path, r.Body)
 
-	body, err := json.Marshal(map[string]interface{}{
-		"query": r.Query,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := api.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,7 @@ func (r SearchRequest) Do() (*api.Response, error) {
 		req = req.WithContext(r.Context)
 	}
 
-	if len(body) > 0 {
+	if r.Body != nil {
 		req.Header[api.HeaderContentType] = api.HeaderContentTypeJSON
 	}
 

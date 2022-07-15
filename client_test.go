@@ -460,7 +460,12 @@ func TestSearch(t *testing.T) {
 	})
 
 	t.Run("search for documents", func(t *testing.T) {
-		resp, err := client.AppSearch.Search(engine, "Pack-Man")
+		resp, err := client.AppSearch.Search(
+			client.AppSearch.Search.WithEngine(engine),
+			client.AppSearch.Search.WithBody(strings.NewReader(fmt.Sprintf(`{
+				"query": "%s"
+			}`, "Pack-Man"))),
+		)
 		defer resp.Body.Close()
 		if err != nil {
 			t.Fatalf("Unexpected error: %s\n", err)
