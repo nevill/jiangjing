@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/nevill/jiangjing/api"
@@ -28,6 +29,12 @@ func (h SynonymsList) WithContext(ctx context.Context) func(*SynonymsListRequest
 	}
 }
 
+func (h SynonymsList) WithBody(body io.Reader) func(*SynonymsListRequest) {
+	return func(r *SynonymsListRequest) {
+		r.Body = body
+	}
+}
+
 func newSynonymsListFunc(tp api.Transport) SynonymsList {
 	return func(name string, o ...func(*SynonymsListRequest)) (*api.Response, error) {
 		r := SynonymsListRequest{
@@ -46,18 +53,23 @@ func newSynonymsListFunc(tp api.Transport) SynonymsList {
 type SynonymsListRequest struct {
 	api.Request
 	Engine string
+	Body   io.Reader
 }
 
 func (r SynonymsListRequest) Do() (*api.Response, error) {
 	path := fmt.Sprintf("/api/as/v1/engines/%s/synonyms", r.Engine)
 
-	req, err := api.NewRequest(http.MethodGet, path, nil)
+	req, err := api.NewRequest(http.MethodGet, path, r.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	if r.Context != nil {
 		req = req.WithContext(r.Context)
+	}
+
+	if r.Body != nil {
+		req.Header[api.HeaderContentType] = api.HeaderContentTypeJSON
 	}
 
 	res, err := r.Transport.Perform(req)
